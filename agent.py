@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional
 
 from client import ClaudeCLIClient, create_cli_client
-from progress import print_session_header, print_progress_summary
+from progress import print_session_header, print_progress_summary, update_progress_file
 from prompts import get_initializer_prompt, get_coding_prompt, copy_spec_to_project
 
 
@@ -182,6 +182,9 @@ async def run_autonomous_agent(
         # Create client (fresh context)
         client = create_cli_client(project_dir, model)
 
+        # Track if this iteration is initializer
+        is_initializer_session = is_first_run
+
         # Choose prompt based on session type
         if is_first_run:
             prompt = get_initializer_prompt()
@@ -192,6 +195,9 @@ async def run_autonomous_agent(
         # Run session with async context manager
         async with client:
             status, response = await run_agent_session(client, prompt, project_dir)
+
+        # Deterministically update progress file after each session
+        update_progress_file(project_dir, iteration, is_initializer_session)
 
         # Handle status
         if status == "continue":

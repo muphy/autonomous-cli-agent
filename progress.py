@@ -55,3 +55,56 @@ def print_progress_summary(project_dir: Path) -> None:
         print(f"\nProgress: {passing}/{total} tests passing ({percentage:.1f}%)")
     else:
         print("\nProgress: feature_list.json not yet created")
+
+
+def update_progress_file(
+    project_dir: Path,
+    session_num: int,
+    is_initializer: bool,
+) -> None:
+    """
+    Automatically update claude-progress.txt after each session.
+
+    This is called deterministically after each session ends,
+    ensuring progress is always tracked regardless of what the agent did.
+
+    Args:
+        project_dir: Project directory
+        session_num: Current session number
+        is_initializer: Whether this was an initializer session
+    """
+    from datetime import datetime
+
+    progress_file = project_dir / "claude-progress.txt"
+    passing, total = count_passing_tests(project_dir)
+
+    # Build session entry
+    session_type = "Initializer" if is_initializer else "Coding Agent"
+    date_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    if total > 0:
+        percentage = (passing / total) * 100
+        progress_str = f"{passing}/{total} tests passing ({percentage:.1f}%)"
+    else:
+        progress_str = "feature_list.json not yet created"
+
+    entry = f"""
+=== Session {session_num}: {session_type} ===
+Date: {date_str}
+
+Progress: {progress_str}
+
+---
+"""
+
+    # Append to file
+    try:
+        if progress_file.exists():
+            existing = progress_file.read_text()
+        else:
+            existing = "# Claude Progress Log\n\nAutomatically generated after each session.\n"
+
+        progress_file.write_text(existing + entry)
+        print(f"\n[Auto] Updated claude-progress.txt")
+    except IOError as e:
+        print(f"\n[Warning] Could not update claude-progress.txt: {e}")
