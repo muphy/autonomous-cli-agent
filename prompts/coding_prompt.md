@@ -139,23 +139,44 @@ git commit -m "Implement [feature name] - verified end-to-end
 "
 ```
 
-### STEP 9: UPDATE PROGRESS NOTES
+### STEP 9: UPDATE PROGRESS NOTES (MANDATORY)
 
-Update `claude-progress.txt` with:
-- What you accomplished this session
-- Which test(s) you completed
-- Any issues discovered or fixed
-- What should be worked on next
-- Current completion status (e.g., "45/200 tests passing")
+**CRITICAL: You MUST update `claude-progress.txt` before ending session!**
 
-### STEP 10: END SESSION CLEANLY
+This file is how you communicate with the next agent. Append a new section:
 
-Before context fills up:
-1. Commit all working code
-2. Update claude-progress.txt
-3. Update feature_list.json if tests verified
-4. Ensure no uncommitted changes
-5. Leave app in working state (no broken features)
+```
+=== Session N: Coding Agent ===
+Date: [current date]
+
+Completed:
+- Implemented feature #X: [description]
+- Fixed bug in [component]
+- [other accomplishments]
+
+Issues found:
+- [list any bugs or problems discovered]
+
+Next session should:
+- Continue with feature #Y
+- Fix [any remaining issues]
+
+Progress: X/200 tests passing (X%)
+```
+
+**WARNING:** Without this file, the next agent will waste time figuring out what was already done!
+
+### STEP 10: END SESSION CLEANLY (MANDATORY)
+
+**You MUST complete ALL of these before session ends:**
+
+1. ✅ Commit all working code
+2. ✅ Update claude-progress.txt (Step 9)
+3. ✅ Update feature_list.json if tests verified
+4. ✅ Run `git status` to ensure no uncommitted changes
+5. ✅ Leave app in working state (no broken features)
+
+**FAILURE TO COMPLETE THESE STEPS WILL BREAK THE MULTI-SESSION WORKFLOW!**
 
 ---
 

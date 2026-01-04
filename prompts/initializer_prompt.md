@@ -90,15 +90,35 @@ the highest-priority features from feature_list.json. Remember:
 - Test thoroughly before marking "passes": true
 - Commit your progress before session ends
 
-### ENDING THIS SESSION
+### ENDING THIS SESSION (MANDATORY)
 
-Before your context fills up:
+**CRITICAL: You MUST complete these steps before session ends:**
+
 1. Commit all work with descriptive messages
-2. Create `claude-progress.txt` with a summary of what you accomplished
+
+2. **MANDATORY: Create `claude-progress.txt`** - This is how you communicate with the next agent!
+   ```
+   === Session 1: Initializer ===
+   Date: [current date]
+
+   Completed:
+   - Created feature_list.json with X features
+   - Created init.sh
+   - Set up project structure
+   - [any other accomplishments]
+
+   Next session should:
+   - Start implementing features from feature_list.json
+   - Begin with feature #1 (highest priority)
+
+   Progress: 0/X tests passing (0%)
+   ```
+
 3. Ensure feature_list.json is complete and saved
+
 4. Leave the environment in a clean, working state
 
-The next agent will continue from here with a fresh context window.
+**WARNING:** If you don't create claude-progress.txt, the next agent will have no context about what was done!
 
 ---
 
