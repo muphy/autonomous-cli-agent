@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 """
-Autonomous Coding Agent Demo (CLI Version)
-===========================================
+Autonomous CLI Agent
+====================
 
-A minimal harness demonstrating long-running autonomous coding with Claude.
-This version uses Claude CLI subprocess instead of SDK, so NO API KEY is required.
-Just login with: claude /connect
+A minimal harness demonstrating long-running autonomous coding with Claude CLI.
+NO API KEY required - just login with: claude /connect
 
 Example Usage:
-    python autonomous_agent_cli_demo.py --project-dir ./claude_clone_demo
-    python autonomous_agent_cli_demo.py --project-dir ./claude_clone_demo --max-iterations 5
+    python main.py --project-dir ./my_project
+    python main.py --project-dir ./my_project --max-iterations 5
 """
 
 import argparse
 import asyncio
 from pathlib import Path
 
-from agent_cli import run_autonomous_agent
-from client_cli import check_claude_cli
+from agent import run_autonomous_agent
+from client import check_claude_cli
 
 
 # Configuration
@@ -27,27 +26,17 @@ DEFAULT_MODEL = "sonnet"
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Autonomous Coding Agent Demo (CLI Mode) - No API key required!",
+        description="Autonomous CLI Agent - No API key required!",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Start fresh project
-  python autonomous_agent_cli_demo.py --project-dir ./claude_clone
-
-  # Use a specific model
-  python autonomous_agent_cli_demo.py --project-dir ./claude_clone --model opus
-
-  # Limit iterations for testing
-  python autonomous_agent_cli_demo.py --project-dir ./claude_clone --max-iterations 5
-
-  # Continue existing project
-  python autonomous_agent_cli_demo.py --project-dir ./claude_clone
+  python main.py --project-dir ./my_project
+  python main.py --project-dir ./my_project --model opus
+  python main.py --project-dir ./my_project --max-iterations 5
 
 Prerequisites:
   1. Install Claude CLI: npm install -g @anthropic-ai/claude-code
   2. Login: claude /connect (use Claude Pro/Max subscription)
-
-No ANTHROPIC_API_KEY required!
         """,
     )
 

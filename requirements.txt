@@ -1,1 +1,2 @@
-claude-code-sdk>=0.0.25
+# No external dependencies required
+# Uses only Python standard library (asyncio, json, subprocess, etc.)

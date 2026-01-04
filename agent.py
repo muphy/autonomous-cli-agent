@@ -1,17 +1,16 @@
 """
-Agent Session Logic
-===================
+Agent Session Logic (CLI Version)
+==================================
 
-Core agent interaction functions for running autonomous coding sessions.
+Core agent interaction functions for running autonomous coding sessions
+using Claude CLI subprocess instead of SDK.
 """
 
 import asyncio
 from pathlib import Path
 from typing import Optional
 
-from claude_code_sdk import ClaudeSDKClient
-
-from client import create_client
+from client import ClaudeCLIClient, create_cli_client
 from progress import print_session_header, print_progress_summary
 from prompts import get_initializer_prompt, get_coding_prompt, copy_spec_to_project
 
@@ -21,15 +20,15 @@ AUTO_CONTINUE_DELAY_SECONDS = 3
 
 
 async def run_agent_session(
-    client: ClaudeSDKClient,
+    client: ClaudeCLIClient,
     message: str,
     project_dir: Path,
 ) -> tuple[str, str]:
     """
-    Run a single agent session using Claude Agent SDK.
+    Run a single agent session using Claude CLI.
 
     Args:
-        client: Claude SDK client
+        client: Claude CLI client
         message: The prompt to send
         project_dir: Project directory path
 
@@ -38,7 +37,7 @@ async def run_agent_session(
         - "continue" if agent should continue working
         - "error" if an error occurred
     """
-    print("Sending prompt to Claude Agent SDK...\n")
+    print("Sending prompt to Claude CLI...\n")
 
     try:
         # Send the query
@@ -47,44 +46,66 @@ async def run_agent_session(
         # Collect response text and show tool use
         response_text = ""
         async for msg in client.receive_response():
-            msg_type = type(msg).__name__
+            msg_type = msg.get("type", "")
 
-            # Handle AssistantMessage (text and tool use)
-            if msg_type == "AssistantMessage" and hasattr(msg, "content"):
-                for block in msg.content:
-                    block_type = type(block).__name__
+            # Handle assistant messages
+            if msg_type == "assistant":
+                content = msg.get("message", {}).get("content", [])
+                for block in content:
+                    block_type = block.get("type", "")
 
-                    if block_type == "TextBlock" and hasattr(block, "text"):
-                        response_text += block.text
-                        print(block.text, end="", flush=True)
-                    elif block_type == "ToolUseBlock" and hasattr(block, "name"):
-                        print(f"\n[Tool: {block.name}]", flush=True)
-                        if hasattr(block, "input"):
-                            input_str = str(block.input)
-                            if len(input_str) > 200:
-                                print(f"   Input: {input_str[:200]}...", flush=True)
-                            else:
-                                print(f"   Input: {input_str}", flush=True)
+                    if block_type == "text":
+                        text = block.get("text", "")
+                        response_text += text
+                        print(text, end="", flush=True)
+                    elif block_type == "tool_use":
+                        tool_name = block.get("name", "unknown")
+                        print(f"\n[Tool: {tool_name}]", flush=True)
+                        tool_input = block.get("input", {})
+                        input_str = str(tool_input)
+                        if len(input_str) > 200:
+                            print(f"   Input: {input_str[:200]}...", flush=True)
+                        else:
+                            print(f"   Input: {input_str}", flush=True)
 
-            # Handle UserMessage (tool results)
-            elif msg_type == "UserMessage" and hasattr(msg, "content"):
-                for block in msg.content:
-                    block_type = type(block).__name__
+            # Handle tool results
+            elif msg_type == "user":
+                content = msg.get("message", {}).get("content", [])
+                for block in content:
+                    block_type = block.get("type", "")
 
-                    if block_type == "ToolResultBlock":
-                        result_content = getattr(block, "content", "")
-                        is_error = getattr(block, "is_error", False)
+                    if block_type == "tool_result":
+                        is_error = block.get("is_error", False)
+                        result_content = block.get("content", "")
 
-                        # Check if command was blocked by security hook
+                        # Check if command was blocked
                         if "blocked" in str(result_content).lower():
                             print(f"   [BLOCKED] {result_content}", flush=True)
                         elif is_error:
-                            # Show errors (truncated)
                             error_str = str(result_content)[:500]
                             print(f"   [Error] {error_str}", flush=True)
                         else:
-                            # Tool succeeded - just show brief confirmation
                             print("   [Done]", flush=True)
+
+            # Handle result messages (final output)
+            elif msg_type == "result":
+                result_text = msg.get("result", "")
+                if result_text and result_text not in response_text:
+                    response_text += result_text
+                    print(result_text, end="", flush=True)
+
+            # Handle errors
+            elif msg_type == "error":
+                error_msg = msg.get("error", "Unknown error")
+                print(f"\n[Error] {error_msg}", flush=True)
+                return "error", error_msg
+
+            # Handle system messages (session init, etc.)
+            elif msg_type == "system":
+                subtype = msg.get("subtype", "")
+                if subtype == "init":
+                    session_id = msg.get("session_id", "")
+                    print(f"[Session: {session_id[:8]}...]", flush=True)
 
         print("\n" + "-" * 70 + "\n")
         return "continue", response_text
@@ -100,7 +121,7 @@ async def run_autonomous_agent(
     max_iterations: Optional[int] = None,
 ) -> None:
     """
-    Run the autonomous agent loop.
+    Run the autonomous agent loop using Claude CLI.
 
     Args:
         project_dir: Directory for the project
@@ -108,7 +129,7 @@ async def run_autonomous_agent(
         max_iterations: Maximum number of iterations (None for unlimited)
     """
     print("\n" + "=" * 70)
-    print("  AUTONOMOUS CODING AGENT DEMO")
+    print("  AUTONOMOUS CODING AGENT DEMO (CLI Mode)")
     print("=" * 70)
     print(f"\nProject directory: {project_dir}")
     print(f"Model: {model}")
@@ -116,6 +137,9 @@ async def run_autonomous_agent(
         print(f"Max iterations: {max_iterations}")
     else:
         print("Max iterations: Unlimited (will run until completion)")
+    print()
+    print("NOTE: Using Claude CLI - no API key required!")
+    print("      Make sure you're logged in with: claude /connect")
     print()
 
     # Create project directory
@@ -156,7 +180,7 @@ async def run_autonomous_agent(
         print_session_header(iteration, is_first_run)
 
         # Create client (fresh context)
-        client = create_client(project_dir, model)
+        client = create_cli_client(project_dir, model)
 
         # Choose prompt based on session type
         if is_first_run:
