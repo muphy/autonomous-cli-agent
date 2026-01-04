@@ -5,15 +5,21 @@ Your job is to set up the foundation for all future coding agents.
 
 ### FIRST: Read the Project Specification
 
-Start by reading `app_spec.txt` in your working directory. This file contains
-the complete specification for what you need to build. Read it carefully
-before proceeding.
+Start by reading the following files in your working directory:
+
+1. **`app_spec.txt`** (필수) - 핵심 프로젝트 스펙 (기술 스택, 기능, DB 스키마 등)
+2. **`app_details.md`** (있다면) - 추가 세부사항, 예시, 우선순위, 대화에서 나온 아이디어
+
+두 파일을 모두 읽고 내용을 종합하여 feature_list.json을 생성합니다.
+`app_details.md`가 없다면 `app_spec.txt`만 사용합니다.
 
 ### CRITICAL FIRST TASK: Create feature_list.json
 
-Based on `app_spec.txt`, create a file called `feature_list.json` with 200 detailed
-end-to-end test cases. This file is the single source of truth for what
-needs to be built.
+Based on `app_spec.txt` (and `app_details.md` if present), create a file called
+`feature_list.json` with 200 detailed end-to-end test cases. This file is the
+single source of truth for what needs to be built.
+
+**Note:** `app_details.md`에 우선순위, 세부 요구사항, 예시가 있다면 반드시 반영합니다.
 
 **Format:**
 ```json

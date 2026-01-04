@@ -29,9 +29,17 @@ def get_coding_prompt() -> str:
 
 
 def copy_spec_to_project(project_dir: Path) -> None:
-    """Copy the app spec file into the project directory for the agent to read."""
+    """Copy the app spec files into the project directory for the agent to read."""
+    # Copy app_spec.txt (required)
     spec_source = PROMPTS_DIR / "app_spec.txt"
     spec_dest = project_dir / "app_spec.txt"
-    if not spec_dest.exists():
+    if spec_source.exists() and not spec_dest.exists():
         shutil.copy(spec_source, spec_dest)
         print("Copied app_spec.txt to project directory")
+
+    # Copy app_details.md (optional)
+    details_source = PROMPTS_DIR / "app_details.md"
+    details_dest = project_dir / "app_details.md"
+    if details_source.exists() and not details_dest.exists():
+        shutil.copy(details_source, details_dest)
+        print("Copied app_details.md to project directory")
